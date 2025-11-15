@@ -36,5 +36,16 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
            "GROUP BY c.id, c.fullName, c.membershipCode, c.currentPointsBalance, c.currentTier.name " +
            "ORDER BY c.currentPointsBalance DESC")
     List<TopCustomerDto> findTopCustomersByPoints(Pageable pageable);
+
+    @Query("SELECT NEW com.company.loyalty.dashboard.dto.NewCustomersDto(" +
+           "CAST(c.registrationDate AS date), COUNT(c)) " +
+           "FROM Customer c " +
+           "WHERE (:fromDate IS NULL OR c.registrationDate >= :fromDate) AND " +
+           "(:toDate IS NULL OR c.registrationDate <= :toDate) " +
+           "GROUP BY CAST(c.registrationDate AS date) " +
+           "ORDER BY CAST(c.registrationDate AS date)")
+    List<com.company.loyalty.dashboard.dto.NewCustomersDto> findNewCustomersByDateRange(
+            @Param("fromDate") java.time.LocalDateTime fromDate,
+            @Param("toDate") java.time.LocalDateTime toDate);
 }
 

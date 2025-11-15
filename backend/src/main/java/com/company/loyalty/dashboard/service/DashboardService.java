@@ -3,11 +3,15 @@ package com.company.loyalty.dashboard.service;
 import com.company.loyalty.common.enums.TransactionType;
 import com.company.loyalty.customer.repository.CustomerRepository;
 import com.company.loyalty.dashboard.dto.DashboardOverviewDto;
+import com.company.loyalty.dashboard.dto.NewCustomersDto;
+import com.company.loyalty.dashboard.dto.PointsByStoreDto;
+import com.company.loyalty.dashboard.dto.PointsTrendDto;
 import com.company.loyalty.dashboard.dto.TopCustomerDto;
 import com.company.loyalty.transaction.repository.LoyaltyTransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -41,6 +45,18 @@ public class DashboardService {
     public List<TopCustomerDto> getTopCustomers(int limit) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
         return customerRepository.findTopCustomersByPoints(pageable);
+    }
+
+    public List<PointsByStoreDto> getPointsByStore(LocalDateTime fromDate, LocalDateTime toDate) {
+        return transactionRepository.findPointsByStore(fromDate, toDate);
+    }
+
+    public List<NewCustomersDto> getNewCustomers(LocalDateTime fromDate, LocalDateTime toDate) {
+        return customerRepository.findNewCustomersByDateRange(fromDate, toDate);
+    }
+
+    public List<PointsTrendDto> getPointsTrend(LocalDateTime fromDate, LocalDateTime toDate) {
+        return transactionRepository.findPointsTrend(fromDate, toDate);
     }
 }
 

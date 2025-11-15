@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface LoyaltyTransactionRepository extends JpaRepository<LoyaltyTransaction, Long> {
@@ -38,5 +39,31 @@ public interface LoyaltyTransactionRepository extends JpaRepository<LoyaltyTrans
 
     @Query("SELECT COALESCE(SUM(t.points), 0) FROM LoyaltyTransaction t WHERE t.type = :type")
     Long sumPointsByType(@Param("type") TransactionType type);
+
+    @Query("SELECT NEW com.company.loyalty.dashboard.dto.PointsByStoreDto(" +
+           "t.store.id, t.store.name, " +
+           "COALESCE(SUM(CASE WHEN t.type = 'EARN' THEN t.points ELSE 0 END), 0), " +
+           "COALESCE(SUM(CASE WHEN t.type = 'REDEEM' THEN t.points ELSE 0 END), 0), " +
+           "COALESCE(SUM(CASE WHEN t.type = 'EARN' THEN t.points ELSE -t.points END), 0)) " +
+           "FROM LoyaltyTransaction t " +
+           "WHERE (:fromDate IS NULL OR t.createdAt >= :fromDate) AND " +
+           "(:toDate IS NULL OR t.createdAt <= :toDate) " +
+           "GROUP BY t.store.id, t.store.name")
+    List<com.company.loyalty.dashboard.dto.PointsByStoreDto> findPointsByStore(
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
+
+    @Query("SELECT NEW com.company.loyalty.dashboard.dto.PointsTrendDto(" +
+           "CAST(t.createdAt AS date), " +
+           "COALESCE(SUM(CASE WHEN t.type = 'EARN' THEN t.points ELSE 0 END), 0), " +
+           "COALESCE(SUM(CASE WHEN t.type = 'REDEEM' THEN t.points ELSE 0 END), 0)) " +
+           "FROM LoyaltyTransaction t " +
+           "WHERE (:fromDate IS NULL OR t.createdAt >= :fromDate) AND " +
+           "(:toDate IS NULL OR t.createdAt <= :toDate) " +
+           "GROUP BY CAST(t.createdAt AS date) " +
+           "ORDER BY CAST(t.createdAt AS date)")
+    List<com.company.loyalty.dashboard.dto.PointsTrendDto> findPointsTrend(
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate);
 }
 

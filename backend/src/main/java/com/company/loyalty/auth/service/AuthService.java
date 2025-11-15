@@ -1,17 +1,23 @@
 package com.company.loyalty.auth.service;
 
+import com.company.loyalty.auth.dto.ChangePasswordRequest;
 import com.company.loyalty.auth.dto.LoginRequest;
 import com.company.loyalty.auth.dto.LoginResponse;
 import com.company.loyalty.auth.dto.RegisterRequest;
+import com.company.loyalty.auth.dto.UpdateProfileRequest;
 import com.company.loyalty.auth.util.JwtTokenUtil;
 import com.company.loyalty.common.enums.UserRole;
 import com.company.loyalty.common.enums.UserStatus;
+import com.company.loyalty.common.exception.ResourceNotFoundException;
+import com.company.loyalty.user.dto.UserDto;
 import com.company.loyalty.user.entity.User;
 import com.company.loyalty.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -85,6 +91,61 @@ public class AuthService {
                 .username(user.getUsername())
                 .role(user.getRole().name())
                 .email(user.getEmail())
+                .build();
+    }
+
+    public UserDto getCurrentUserProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return toUserDto(user);
+    }
+
+    @Transactional
+    public UserDto updateProfile(UpdateProfileRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new IllegalArgumentException("Email already exists");
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        user = userRepository.save(user);
+        return toUserDto(user);
+    }
+
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    private UserDto toUserDto(User user) {
+        return UserDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
                 .build();
     }
 }
