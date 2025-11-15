@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: loyalty-program-manager
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/loyalty_db
+    username: loyalty_user
+    password: loyalty_pass
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+logging:
+  level:
+    com.company.loyalty: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+  secret: loyalty-program-secret-key-change-in-production-min-256-bits
+  expiration: 86400000 # 24 hours in milliseconds
+
