@@ -11,6 +11,7 @@ import {
   MenuItem,
 } from '@mui/material'
 import { rewardApi, Reward } from '../../api/rewardApi'
+import { useToast } from '../../context/ToastContext'
 
 interface RewardFormDialogProps {
   open: boolean
@@ -28,6 +29,7 @@ const RewardFormDialog = ({ open, onClose, reward }: RewardFormDialogProps) => {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (reward) {
@@ -43,12 +45,16 @@ const RewardFormDialog = ({ open, onClose, reward }: RewardFormDialogProps) => {
     try {
       if (reward) {
         await rewardApi.update(reward.id, formData as Reward)
+        showToast('Reward updated successfully', 'success')
       } else {
         await rewardApi.create(formData as Reward)
+        showToast('Reward created successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save reward')
+      const errorMsg = err.response?.data?.message || 'Failed to save reward'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }

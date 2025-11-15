@@ -30,6 +30,13 @@ export interface CreateCustomerRequest {
   country?: string
 }
 
+export interface CustomerSummary {
+  totalPointsEarned?: number
+  totalPointsUsed?: number
+  activeTier?: string
+  lastVisit?: string
+}
+
 export interface PageResponse<T> {
   content: T[]
   page: number
@@ -50,7 +57,7 @@ export const customerApi = {
     return apiClient.get<{ success: boolean; data: Customer }>(`/customers/${id}`)
   },
   getSummary: (id: number) => {
-    return apiClient.get<{ success: boolean; data: any }>(`/customers/${id}/summary`)
+    return apiClient.get<{ success: boolean; data: CustomerSummary }>(`/customers/${id}/summary`)
   },
   create: (data: CreateCustomerRequest) => {
     return apiClient.post<{ success: boolean; data: Customer }>('/customers', data)

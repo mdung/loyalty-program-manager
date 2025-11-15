@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { User } from './userApi'
 
 export interface LoginRequest {
   username: string
@@ -24,5 +25,8 @@ export const authApi = {
   register: async (username: string, password: string, email: string, role?: string) => {
     return apiClient.post('/auth/register', { username, password, email, role })
   },
+  getProfile: () => apiClient.get<{ success: boolean; data: User }>('/auth/profile'),
+  updateProfile: (email: string) => apiClient.put<{ success: boolean; data: User }>('/auth/profile', { email }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiClient.put('/auth/change-password', { currentPassword, newPassword }),
 }
-

@@ -14,6 +14,7 @@ import { transactionApi } from '../../api/transactionApi'
 import { customerApi } from '../../api/customerApi'
 import { storeApi } from '../../api/storeApi'
 import { rewardApi } from '../../api/rewardApi'
+import { useToast } from '../../context/ToastContext'
 
 interface TransactionFormDialogProps {
   open: boolean
@@ -35,6 +36,7 @@ const TransactionFormDialog = ({ open, onClose, type }: TransactionFormDialogPro
   const [rewards, setRewards] = useState<any[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (open) {
@@ -68,6 +70,7 @@ const TransactionFormDialog = ({ open, onClose, type }: TransactionFormDialogPro
           transactionAmount: Number(formData.transactionAmount),
           description: formData.description,
         })
+        showToast('Points earned successfully', 'success')
       } else {
         await transactionApi.redeem({
           customerId: Number(formData.customerId),
@@ -76,10 +79,13 @@ const TransactionFormDialog = ({ open, onClose, type }: TransactionFormDialogPro
           pointsUsed: Number(formData.pointsUsed),
           description: formData.description,
         })
+        showToast('Points redeemed successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to process transaction')
+      const errorMsg = err.response?.data?.message || 'Failed to process transaction'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }

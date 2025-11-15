@@ -16,6 +16,7 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
+import RuleIcon from '@mui/icons-material/Rule'
 import { useAuth } from '../../context/AuthContext'
 
 const drawerWidth = 240
@@ -29,6 +30,7 @@ const menuItems = [
   { text: 'Rewards', icon: <CardGiftcardIcon />, path: '/rewards' },
   { text: 'Redemptions', icon: <CardGiftcardIcon />, path: '/redemptions' },
   { text: 'Campaigns', icon: <CampaignIcon />, path: '/campaigns' },
+  { text: 'Earning Rules', icon: <RuleIcon />, path: '/earning-rules' },
   { text: 'Users', icon: <AdminPanelSettingsIcon />, path: '/users', adminOnly: true },
 ]
 

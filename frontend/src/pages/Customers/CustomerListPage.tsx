@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Box, Typography, Button, TextField, Grid, CircularProgress } from '@mui/material'
+import { Box, Typography, Button, TextField, Grid, CircularProgress, IconButton } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import EditIcon from '@mui/icons-material/Edit'
 import { customerApi, Customer } from '../../api/customerApi'
 import DataTable from '../../components/common/DataTable'
 import CustomerFormDialog from './CustomerFormDialog'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from '../../context/ToastContext'
 
 const CustomerListPage = () => {
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -13,9 +15,11 @@ const CustomerListPage = () => {
   const [totalElements, setTotalElements] = useState(0)
   const [loading, setLoading] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [searchName, setSearchName] = useState('')
   const [searchPhone, setSearchPhone] = useState('')
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   useEffect(() => {
     fetchCustomers()
@@ -28,7 +32,7 @@ const CustomerListPage = () => {
       setCustomers(response.data.content)
       setTotalElements(response.data.totalElements)
     } catch (error) {
-      console.error('Failed to fetch customers:', error)
+      showToast('Failed to fetch customers', 'error')
     } finally {
       setLoading(false)
     }
@@ -41,6 +45,17 @@ const CustomerListPage = () => {
     { id: 'email', label: 'Email' },
     { id: 'tierName', label: 'Tier' },
     { id: 'currentPointsBalance', label: 'Points', format: (value: number) => value.toLocaleString() },
+    {
+      id: 'actions',
+      label: 'Actions',
+      format: (value: any, row: Customer) => (
+        <Box>
+          <IconButton size="small" onClick={() => navigate(`/customers/${row.id}`)}>
+            <EditIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
   ]
 
   if (loading && customers.length === 0) {

@@ -10,6 +10,7 @@ import {
   Alert,
 } from '@mui/material'
 import { tierApi, Tier } from '../../api/tierApi'
+import { useToast } from '../../context/ToastContext'
 
 interface TierFormDialogProps {
   open: boolean
@@ -27,6 +28,7 @@ const TierFormDialog = ({ open, onClose, tier }: TierFormDialogProps) => {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (tier) {
@@ -42,12 +44,16 @@ const TierFormDialog = ({ open, onClose, tier }: TierFormDialogProps) => {
     try {
       if (tier) {
         await tierApi.update(tier.id, formData as Tier)
+        showToast('Tier updated successfully', 'success')
       } else {
         await tierApi.create(formData as Tier)
+        showToast('Tier created successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save tier')
+      const errorMsg = err.response?.data?.message || 'Failed to save tier'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }

@@ -12,6 +12,8 @@ import RewardListPage from '../pages/Rewards/RewardListPage'
 import RedemptionListPage from '../pages/Redemptions/RedemptionListPage'
 import CampaignListPage from '../pages/Campaigns/CampaignListPage'
 import UserListPage from '../pages/Users/UserListPage'
+import EarningRuleListPage from '../pages/EarningRules/EarningRuleListPage'
+import ProfilePage from '../pages/Profile/ProfilePage'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth()
@@ -46,6 +48,8 @@ const AppRoutes = () => {
         <Route path="rewards" element={<RewardListPage />} />
         <Route path="redemptions" element={<RedemptionListPage />} />
         <Route path="campaigns" element={<CampaignListPage />} />
+        <Route path="earning-rules" element={<EarningRuleListPage />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route
           path="users"
           element={

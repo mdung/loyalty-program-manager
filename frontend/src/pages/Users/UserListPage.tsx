@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Box, Typography, Button, CircularProgress, TextField } from '@mui/material'
+import { Box, Typography, Button, CircularProgress, TextField, IconButton } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { userApi, User } from '../../api/userApi'
 import DataTable from '../../components/common/DataTable'
 import UserFormDialog from './UserFormDialog'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
+import { useToast } from '../../context/ToastContext'
 
 const UserListPage = () => {
   const [users, setUsers] = useState<User[]>([])
@@ -12,7 +16,10 @@ const UserListPage = () => {
   const [totalElements, setTotalElements] = useState(0)
   const [loading, setLoading] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null }>({ open: false, id: null })
   const [search, setSearch] = useState('')
+  const { showToast } = useToast()
 
   useEffect(() => {
     fetchUsers()
@@ -25,10 +32,23 @@ const UserListPage = () => {
       setUsers(response.data.content)
       setTotalElements(response.data.totalElements)
     } catch (error) {
-      console.error('Failed to fetch users:', error)
+      showToast('Failed to fetch users', 'error')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleDelete = async () => {
+    if (deleteDialog.id) {
+      try {
+        await userApi.delete(deleteDialog.id)
+        showToast('User deleted successfully', 'success')
+        fetchUsers()
+      } catch (error: any) {
+        showToast('Failed to delete user', 'error')
+      }
+    }
+    setDeleteDialog({ open: false, id: null })
   }
 
   const columns = [
@@ -36,6 +56,20 @@ const UserListPage = () => {
     { id: 'email', label: 'Email' },
     { id: 'role', label: 'Role' },
     { id: 'status', label: 'Status' },
+    {
+      id: 'actions',
+      label: 'Actions',
+      format: (value: any, row: User) => (
+        <Box>
+          <IconButton size="small" onClick={() => { setSelectedUser(row); setOpenDialog(true) }}>
+            <EditIcon />
+          </IconButton>
+          <IconButton size="small" color="error" onClick={() => setDeleteDialog({ open: true, id: row.id })}>
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
   ]
 
   if (loading && users.length === 0) {
@@ -78,10 +112,19 @@ const UserListPage = () => {
       />
       <UserFormDialog
         open={openDialog}
+        user={selectedUser}
         onClose={() => {
           setOpenDialog(false)
+          setSelectedUser(null)
           fetchUsers()
         }}
+      />
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Delete User"
+        message="Are you sure you want to delete this user?"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialog({ open: false, id: null })}
       />
     </Box>
   )

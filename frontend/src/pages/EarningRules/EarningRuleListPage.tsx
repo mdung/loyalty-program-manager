@@ -3,31 +3,31 @@ import { Box, Typography, Button, CircularProgress, IconButton } from '@mui/mate
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { tierApi, Tier } from '../../api/tierApi'
+import { earningRuleApi, EarningRule } from '../../api/earningRuleApi'
 import DataTable from '../../components/common/DataTable'
-import TierFormDialog from './TierFormDialog'
+import EarningRuleFormDialog from './EarningRuleFormDialog'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { useToast } from '../../context/ToastContext'
 
-const TierListPage = () => {
-  const [tiers, setTiers] = useState<Tier[]>([])
+const EarningRuleListPage = () => {
+  const [rules, setRules] = useState<EarningRule[]>([])
   const [loading, setLoading] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
-  const [selectedTier, setSelectedTier] = useState<Tier | null>(null)
+  const [selectedRule, setSelectedRule] = useState<EarningRule | null>(null)
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null }>({ open: false, id: null })
   const { showToast } = useToast()
 
   useEffect(() => {
-    fetchTiers()
+    fetchRules()
   }, [])
 
-  const fetchTiers = async () => {
+  const fetchRules = async () => {
     setLoading(true)
     try {
-      const response = await tierApi.getAll()
-      setTiers(response.data)
-    } catch (error) {
-      showToast('Failed to fetch tiers', 'error')
+      const response = await earningRuleApi.getAll()
+      setRules(response.data)
+    } catch (error: any) {
+      showToast('Failed to fetch earning rules', 'error')
     } finally {
       setLoading(false)
     }
@@ -36,11 +36,11 @@ const TierListPage = () => {
   const handleDelete = async () => {
     if (deleteDialog.id) {
       try {
-        await tierApi.delete(deleteDialog.id)
-        showToast('Tier deleted successfully', 'success')
-        fetchTiers()
+        await earningRuleApi.delete(deleteDialog.id)
+        showToast('Earning rule deleted successfully', 'success')
+        fetchRules()
       } catch (error: any) {
-        showToast('Failed to delete tier', 'error')
+        showToast('Failed to delete earning rule', 'error')
       }
     }
     setDeleteDialog({ open: false, id: null })
@@ -48,18 +48,19 @@ const TierListPage = () => {
 
   const columns = [
     { id: 'name', label: 'Name' },
-    { id: 'minPoints', label: 'Min Points', format: (v: number) => v.toLocaleString() },
-    { id: 'maxPoints', label: 'Max Points', format: (v: number) => v.toLocaleString() },
-    { id: 'priority', label: 'Priority' },
+    { id: 'basePointsPerCurrencyUnit', label: 'Points per Unit', format: (v: number) => v.toFixed(2) },
+    { id: 'storeName', label: 'Store' },
+    { id: 'tierName', label: 'Tier' },
+    { id: 'active', label: 'Active', format: (v: boolean) => v ? 'Yes' : 'No' },
     {
       id: 'actions',
       label: 'Actions',
-      format: (value: any, row: Tier) => (
+      format: (value: any, row: EarningRule) => (
         <Box>
           <IconButton
             size="small"
             onClick={() => {
-              setSelectedTier(row)
+              setSelectedRule(row)
               setOpenDialog(true)
             }}
           >
@@ -88,36 +89,36 @@ const TierListPage = () => {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Tiers</Typography>
+        <Typography variant="h4">Earning Rules</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
-          setSelectedTier(null)
+          setSelectedRule(null)
           setOpenDialog(true)
         }}>
-          Add Tier
+          Add Earning Rule
         </Button>
       </Box>
       <DataTable
         columns={columns}
-        rows={tiers}
+        rows={rules}
         page={0}
         rowsPerPage={10}
-        totalElements={tiers.length}
+        totalElements={rules.length}
         onPageChange={() => {}}
         onRowsPerPageChange={() => {}}
       />
-      <TierFormDialog
+      <EarningRuleFormDialog
         open={openDialog}
-        tier={selectedTier}
+        rule={selectedRule}
         onClose={() => {
           setOpenDialog(false)
-          setSelectedTier(null)
-          fetchTiers()
+          setSelectedRule(null)
+          fetchRules()
         }}
       />
       <ConfirmDialog
         open={deleteDialog.open}
-        title="Delete Tier"
-        message="Are you sure you want to delete this tier?"
+        title="Delete Earning Rule"
+        message="Are you sure you want to delete this earning rule?"
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialog({ open: false, id: null })}
       />
@@ -125,5 +126,5 @@ const TierListPage = () => {
   )
 }
 
-export default TierListPage
+export default EarningRuleListPage
 

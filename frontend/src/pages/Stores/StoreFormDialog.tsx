@@ -10,6 +10,7 @@ import {
   Alert,
 } from '@mui/material'
 import { storeApi, Store } from '../../api/storeApi'
+import { useToast } from '../../context/ToastContext'
 
 interface StoreFormDialogProps {
   open: boolean
@@ -28,6 +29,7 @@ const StoreFormDialog = ({ open, onClose, store }: StoreFormDialogProps) => {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (store) {
@@ -43,12 +45,16 @@ const StoreFormDialog = ({ open, onClose, store }: StoreFormDialogProps) => {
     try {
       if (store) {
         await storeApi.update(store.id, formData as Store)
+        showToast('Store updated successfully', 'success')
       } else {
         await storeApi.create(formData as Store)
+        showToast('Store created successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save store')
+      const errorMsg = err.response?.data?.message || 'Failed to save store'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Box, Typography, Button, CircularProgress } from '@mui/material'
+import { Box, Typography, Button, CircularProgress, Grid, TextField, MenuItem } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import { transactionApi, Transaction } from '../../api/transactionApi'
+import { storeApi } from '../../api/storeApi'
+import { customerApi } from '../../api/customerApi'
 import DataTable from '../../components/common/DataTable'
 import TransactionFormDialog from './TransactionFormDialog'
+import { useToast } from '../../context/ToastContext'
 
 const TransactionListPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -13,19 +16,46 @@ const TransactionListPage = () => {
   const [loading, setLoading] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
   const [dialogType, setDialogType] = useState<'earn' | 'redeem'>('earn')
+  const [filters, setFilters] = useState({
+    customerId: '',
+    storeId: '',
+    type: '',
+    fromDate: '',
+    toDate: '',
+  })
+  const [stores, setStores] = useState<any[]>([])
+  const { showToast } = useToast()
 
   useEffect(() => {
     fetchTransactions()
-  }, [page, size])
+    fetchStores()
+  }, [page, size, filters.customerId, filters.storeId, filters.type, filters.fromDate, filters.toDate])
+
+  const fetchStores = async () => {
+    try {
+      const response = await storeApi.getAll()
+      setStores(response.data)
+    } catch (error) {
+      console.error('Failed to fetch stores:', error)
+    }
+  }
 
   const fetchTransactions = async () => {
     setLoading(true)
     try {
-      const response = await transactionApi.getAll(page, size)
+      const response = await transactionApi.getAll(
+        page,
+        size,
+        filters.customerId ? Number(filters.customerId) : undefined,
+        filters.storeId ? Number(filters.storeId) : undefined,
+        filters.type || undefined,
+        filters.fromDate || undefined,
+        filters.toDate || undefined
+      )
       setTransactions(response.data.content)
       setTotalElements(response.data.totalElements)
     } catch (error) {
-      console.error('Failed to fetch transactions:', error)
+      showToast('Failed to fetch transactions', 'error')
     } finally {
       setLoading(false)
     }
@@ -76,6 +106,82 @@ const TransactionListPage = () => {
           </Button>
         </Box>
       </Box>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Customer ID"
+            value={filters.customerId}
+            onChange={(e) => {
+              setFilters({ ...filters, customerId: e.target.value })
+              setPage(0)
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            fullWidth
+            select
+            label="Store"
+            value={filters.storeId}
+            onChange={(e) => {
+              setFilters({ ...filters, storeId: e.target.value })
+              setPage(0)
+            }}
+          >
+            <MenuItem value="">All Stores</MenuItem>
+            {stores.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={2}>
+          <TextField
+            fullWidth
+            select
+            label="Type"
+            value={filters.type}
+            onChange={(e) => {
+              setFilters({ ...filters, type: e.target.value })
+              setPage(0)
+            }}
+          >
+            <MenuItem value="">All Types</MenuItem>
+            <MenuItem value="EARN">Earn</MenuItem>
+            <MenuItem value="REDEEM">Redeem</MenuItem>
+            <MenuItem value="ADJUSTMENT">Adjustment</MenuItem>
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={2}>
+          <TextField
+            fullWidth
+            type="date"
+            label="From Date"
+            InputLabelProps={{ shrink: true }}
+            value={filters.fromDate}
+            onChange={(e) => {
+              setFilters({ ...filters, fromDate: e.target.value })
+              setPage(0)
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={2}>
+          <TextField
+            fullWidth
+            type="date"
+            label="To Date"
+            InputLabelProps={{ shrink: true }}
+            value={filters.toDate}
+            onChange={(e) => {
+              setFilters({ ...filters, toDate: e.target.value })
+              setPage(0)
+            }}
+          />
+        </Grid>
+      </Grid>
       <DataTable
         columns={columns}
         rows={transactions}

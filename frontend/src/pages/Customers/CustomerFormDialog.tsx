@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +10,7 @@ import {
   Alert,
 } from '@mui/material'
 import { customerApi, CreateCustomerRequest } from '../../api/customerApi'
+import { useToast } from '../../context/ToastContext'
 
 interface CustomerFormDialogProps {
   open: boolean
@@ -30,6 +31,33 @@ const CustomerFormDialog = ({ open, onClose, customer }: CustomerFormDialogProps
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    if (customer && open) {
+      setFormData({
+        fullName: customer.fullName || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        dateOfBirth: customer.dateOfBirth || '',
+        gender: customer.gender || '',
+        address: customer.address || '',
+        city: customer.city || '',
+        country: customer.country || '',
+      })
+    } else if (open) {
+      setFormData({
+        fullName: '',
+        phone: '',
+        email: '',
+        dateOfBirth: '',
+        gender: '',
+        address: '',
+        city: '',
+        country: '',
+      })
+    }
+  }, [customer, open])
 
   const handleSubmit = async () => {
     setError('')
@@ -37,12 +65,16 @@ const CustomerFormDialog = ({ open, onClose, customer }: CustomerFormDialogProps
     try {
       if (customer) {
         await customerApi.update(customer.id, formData)
+        showToast('Customer updated successfully', 'success')
       } else {
         await customerApi.create(formData)
+        showToast('Customer created successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save customer')
+      const errorMsg = err.response?.data?.message || 'Failed to save customer'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }

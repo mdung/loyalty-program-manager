@@ -13,11 +13,15 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { useToast } from '../context/ToastContext'
 
 const DashboardPage = () => {
   const [overview, setOverview] = useState<DashboardOverview | null>(null)
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([])
   const [loading, setLoading] = useState(true)
+  const [newMembersData, setNewMembersData] = useState<any[]>([])
+  const [pointsByStoreData, setPointsByStoreData] = useState<any[]>([])
+  const { showToast } = useToast()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,8 +32,27 @@ const DashboardPage = () => {
         ])
         setOverview(overviewRes.data)
         setTopCustomers(topCustomersRes.data)
+        
+        // Mock data for new members per month (in real app, fetch from API)
+        const last6Months = []
+        const now = new Date()
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+          last6Months.push({
+            month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            members: Math.floor(Math.random() * 50) + 10,
+          })
+        }
+        setNewMembersData(last6Months)
+        
+        // Mock data for points by store (in real app, fetch from API)
+        setPointsByStoreData([
+          { store: 'Store A', points: 50000 },
+          { store: 'Store B', points: 35000 },
+          { store: 'Store C', points: 28000 },
+        ])
       } catch (error) {
-        console.error('Failed to fetch dashboard data:', error)
+        showToast('Failed to fetch dashboard data', 'error')
       } finally {
         setLoading(false)
       }
@@ -142,6 +165,44 @@ const DashboardPage = () => {
                   </Box>
                 ))}
               </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                New Members Per Month
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={newMembersData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="members" stroke="#8884d8" name="New Members" />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Points by Store
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={pointsByStoreData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="store" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="points" fill="#82ca9d" name="Points" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </Grid>

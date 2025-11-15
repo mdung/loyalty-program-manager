@@ -10,6 +10,7 @@ import {
   Alert,
 } from '@mui/material'
 import { campaignApi, Campaign } from '../../api/campaignApi'
+import { useToast } from '../../context/ToastContext'
 
 interface CampaignFormDialogProps {
   open: boolean
@@ -29,6 +30,7 @@ const CampaignFormDialog = ({ open, onClose, campaign }: CampaignFormDialogProps
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (campaign) {
@@ -56,12 +58,16 @@ const CampaignFormDialog = ({ open, onClose, campaign }: CampaignFormDialogProps
     try {
       if (campaign) {
         await campaignApi.update(campaign.id, formData as Campaign)
+        showToast('Campaign updated successfully', 'success')
       } else {
         await campaignApi.create(formData as Campaign)
+        showToast('Campaign created successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save campaign')
+      const errorMsg = err.response?.data?.message || 'Failed to save campaign'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -10,7 +10,8 @@ import {
   Alert,
   MenuItem,
 } from '@mui/material'
-import { userApi, CreateUserRequest } from '../../api/userApi'
+import { userApi, CreateUserRequest, UpdateUserRequest } from '../../api/userApi'
+import { useToast } from '../../context/ToastContext'
 
 interface UserFormDialogProps {
   open: boolean
@@ -25,21 +26,38 @@ const UserFormDialog = ({ open, onClose, user }: UserFormDialogProps) => {
     email: '',
     role: 'STAFF',
   })
+  const [updateData, setUpdateData] = useState<UpdateUserRequest>({
+    role: 'STAFF',
+    status: 'ACTIVE',
+  })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    if (user && open) {
+      setUpdateData({ role: user.role, status: user.status })
+    } else if (open) {
+      setFormData({ username: '', password: '', email: '', role: 'STAFF' })
+    }
+  }, [user, open])
 
   const handleSubmit = async () => {
     setError('')
     setLoading(true)
     try {
       if (user) {
-        await userApi.update(user.id, { role: formData.role as any })
+        await userApi.update(user.id, updateData)
+        showToast('User updated successfully', 'success')
       } else {
         await userApi.create(formData)
+        showToast('User created successfully', 'success')
       }
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save user')
+      const errorMsg = err.response?.data?.message || 'Failed to save user'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setLoading(false)
     }
@@ -90,14 +108,35 @@ const UserFormDialog = ({ open, onClose, user }: UserFormDialogProps) => {
               required
               select
               label="Role"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+              value={user ? updateData.role : formData.role}
+              onChange={(e) => {
+                if (user) {
+                  setUpdateData({ ...updateData, role: e.target.value as any })
+                } else {
+                  setFormData({ ...formData, role: e.target.value as any })
+                }
+              }}
             >
               <MenuItem value="ADMIN">Admin</MenuItem>
               <MenuItem value="MANAGER">Manager</MenuItem>
               <MenuItem value="STAFF">Staff</MenuItem>
             </TextField>
           </Grid>
+          {user && (
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                select
+                label="Status"
+                value={updateData.status}
+                onChange={(e) => setUpdateData({ ...updateData, status: e.target.value as any })}
+              >
+                <MenuItem value="ACTIVE">Active</MenuItem>
+                <MenuItem value="DISABLED">Disabled</MenuItem>
+              </TextField>
+            </Grid>
+          )}
         </Grid>
       </DialogContent>
       <DialogActions>
